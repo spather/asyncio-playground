@@ -43,6 +43,7 @@ async def main():
             print(f"{url} - HTTP Error Code {result['status_code']}")
         else:
             print(f"Unknown result type {result['type']}")
+        print()
 
 
 if __name__ == "__main__":
