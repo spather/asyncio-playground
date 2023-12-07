@@ -12,7 +12,17 @@ import asyncio
 
 async def fetch_url(session: aiohttp.ClientSession, url: str):
     async with session.get(url) as resp:
-        return await resp.text()
+        if resp.status == 200:
+            text = await resp.text()
+            return {
+                "type": "success",
+                "text": text,
+            }
+        else:
+            return {
+                "type": "http_error",
+                "status_code": resp.status,
+            }
 
 
 async def main():
@@ -20,13 +30,19 @@ async def main():
         "http://httpbin.org/get",
         "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt",
         "http://httpbin.org/image",
+        "http://httpbin.org/status/404",
     ]
 
     async with aiohttp.ClientSession() as session:
         results = await asyncio.gather(*[fetch_url(session, url) for url in urls])
 
-    for i, url in enumerate(urls):
-        print(f"Url: {url}: \n{results[i][:100]}")
+    for url, result in zip(urls, results):
+        if result["type"] == "success":
+            print(f"{url} - SUCCESS: \n{result['text'][:100]}")
+        elif result["type"] == "http_error":
+            print(f"{url} - HTTP Error Code {result['status_code']}")
+        else:
+            print(f"Unknown result type {result['type']}")
 
 
 if __name__ == "__main__":
