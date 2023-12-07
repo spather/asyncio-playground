@@ -43,7 +43,14 @@ async def consumer(queue: asyncio.Queue, max_items_to_consume: int, timeout: int
         items_consumed < max_items_to_consume
         and time.monotonic() - start_time < timeout
     ):
-        item = await queue.get()
+        try:
+            item = await asyncio.wait_for(
+                queue.get(), timeout=timeout - (time.monotonic() - start_time)
+            )
+        except asyncio.TimeoutError:
+            print(f"CONSUMER: timed out while waiting for item from the queue")
+            continue
+
         items_consumed += 1
         print(
             f"CONSUMER: received {item}, has been running for {time.monotonic() - start_time:.2f} seconds"
