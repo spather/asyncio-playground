@@ -101,6 +101,8 @@ traitlets==5.14.0
     #   jupyter-client
     #   jupyter-core
     #   matplotlib-inline
+types-aiofiles==23.2.0.0
+    # via -r requirements.dev.in
 typing-extensions==4.8.0
     # via mypy
 wcwidth==0.2.12

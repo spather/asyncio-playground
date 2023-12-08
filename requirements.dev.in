@@ -11,3 +11,4 @@ black
 ipykernel # If you'll be using Jupyter notebooks
 mypy
 pip-tools # Even though you manually installed this, put it here so it ends up in the list of dev requirements
+types-aiofiles
