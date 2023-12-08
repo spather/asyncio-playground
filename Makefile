@@ -6,4 +6,4 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 all: mypy
 
 mypy:
-	mypy $(ROOT_DIR)/src/
+	mypy $(ROOT_DIR)/src/ --check-untyped-defs

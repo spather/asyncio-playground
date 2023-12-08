@@ -62,7 +62,7 @@ async def consumer(queue: asyncio.Queue, max_items_to_consume: int, timeout: int
 
 
 async def main():
-    queue = asyncio.Queue()
+    queue: asyncio.Queue = asyncio.Queue()
 
     producer_task = asyncio.create_task(producer(queue))
     consumer_task = asyncio.create_task(
@@ -76,7 +76,7 @@ async def main():
     try:
         await producer_task
     except asyncio.CancelledError:
-        assert producer_task.cancelled
+        assert producer_task.cancelled()
         print(f"Producer task is canceled")
 
     print("Finished")
