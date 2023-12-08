@@ -1,4 +1,10 @@
 """
+Note: I had wanted to use this example to show how generators and co-routines
+      could simplify stateful code otherwise implemented in classes. I wrote
+      a simple parser for simple numeric expressions in the standard way and
+      then was going to convert it. Got as far as converting the tokenizer to
+      a generator and then ran out of time / inspiration.
+
 Implements a parser for the following BNF grammar:
 
 <expression> ::= <numeric_literal> | <expression> <operator> <expression>
@@ -10,7 +16,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 import re
-from typing import List, Optional, Type, TypeVar, Union
+from typing import Iterator, List, Optional, Type, TypeVar, Union
 
 
 # Token types
@@ -43,44 +49,40 @@ class BinaryExpression:
 ASTNode = NumericLiteral | BinaryExpression
 
 
-@dataclass
-class Tokenizer:
-    def __init__(self, s: str):
-        self.s = s
-        self.cursor = 0
+def tokenizer_gen(s: str) -> Iterator[Optional[Token]]:
+    cursor = 0
 
-    def hasMoreTokens(self) -> bool:
-        return self.cursor < len(self.s)
-
-    def getNextToken(self) -> Optional[Token]:
-        if not self.hasMoreTokens():
-            return None
-
+    while cursor < len(s):
         # Whitespace
-        m = re.match("^\s+", self.s[self.cursor :])
+        m = re.match("^\s+", s[cursor:])
         if m is not None:
             # Just move past whitespace
-            self.cursor += m.end()
+            cursor += m.end()
 
         # Digits
-        m = re.match("\d+", self.s[self.cursor :])
+        m = re.match("\d+", s[cursor:])
         token: Optional[Token] = None
 
         if m is not None:
             token = Number(int(m.group(0)))
-            self.cursor += m.end()
-            return token
+            cursor += m.end()
+            yield token
+            continue
 
         # Operators
-        m = re.match("[\+\-\*\/]", self.s[self.cursor :])
+        m = re.match("[\+\-\*\/]", s[cursor:])
         if m is not None:
             token = Operator(m.group(0))
-            self.cursor += m.end()
-            return token
+            cursor += m.end()
+            yield token
+            continue
 
         raise SyntaxError(
-            f"Could not extract any tokens starting at position {self.cursor}: {self.s[self.cursor:self.cursor+10]}"
+            f"Could not extract any tokens starting at position {cursor}: {s[cursor:cursor+10]}"
         )
+
+    # No more tokens
+    yield None
 
 
 TToken = TypeVar("TToken", bound=Token)
@@ -88,12 +90,12 @@ TToken = TypeVar("TToken", bound=Token)
 
 class Parser:
     def __init__(self):
-        self.tokenizer = Tokenizer("")
+        self.tokenizer = tokenizer_gen("")
         self.lookahead: Optional[Token] = None
 
     def parse(self, s: str):
-        self.tokenizer = Tokenizer(s)
-        self.lookahead = self.tokenizer.getNextToken()
+        self.tokenizer = tokenizer_gen(s)
+        self.lookahead = next(self.tokenizer)
 
         return self.expression()
 
@@ -120,7 +122,7 @@ class Parser:
         if not isinstance(token, token_type):
             raise SyntaxError(f"Unexpected token {type(token)}, expected {token_type}")
 
-        self.lookahead = self.tokenizer.getNextToken()
+        self.lookahead = next(self.tokenizer)
         return token
 
 
